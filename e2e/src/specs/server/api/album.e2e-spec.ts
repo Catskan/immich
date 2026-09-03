@@ -157,28 +157,28 @@ describe('/albums', () => {
           expect.objectContaining({
             albumName: user1SharedLink,
             albumUsers: expect.arrayContaining([
-              { role: AlbumUserRole.Owner, user: expect.objectContaining({ id: user1.userId }) },
+              { role: AlbumUserRole.Owner, showInTimeline: false, user: expect.objectContaining({ id: user1.userId }) },
             ]),
             shared: true,
           }),
           expect.objectContaining({
             albumName: user1SharedEditorUser,
             albumUsers: expect.arrayContaining([
-              { role: AlbumUserRole.Owner, user: expect.objectContaining({ id: user1.userId }) },
+              { role: AlbumUserRole.Owner, showInTimeline: false, user: expect.objectContaining({ id: user1.userId }) },
             ]),
             shared: true,
           }),
           expect.objectContaining({
             albumName: user1SharedViewerUser,
             albumUsers: expect.arrayContaining([
-              { role: AlbumUserRole.Owner, user: expect.objectContaining({ id: user1.userId }) },
+              { role: AlbumUserRole.Owner, showInTimeline: false, user: expect.objectContaining({ id: user1.userId }) },
             ]),
             shared: true,
           }),
           expect.objectContaining({
             albumName: user2SharedUser,
             albumUsers: expect.arrayContaining([
-              { role: AlbumUserRole.Owner, user: expect.objectContaining({ id: user2.userId }) },
+              { role: AlbumUserRole.Owner, showInTimeline: false, user: expect.objectContaining({ id: user2.userId }) },
             ]),
             shared: true,
           }),
@@ -195,35 +195,35 @@ describe('/albums', () => {
           expect.objectContaining({
             albumName: user1SharedEditorUser,
             albumUsers: expect.arrayContaining([
-              { role: AlbumUserRole.Owner, user: expect.objectContaining({ id: user1.userId }) },
+              { role: AlbumUserRole.Owner, showInTimeline: false, user: expect.objectContaining({ id: user1.userId }) },
             ]),
             shared: true,
           }),
           expect.objectContaining({
             albumName: user1SharedViewerUser,
             albumUsers: expect.arrayContaining([
-              { role: AlbumUserRole.Owner, user: expect.objectContaining({ id: user1.userId }) },
+              { role: AlbumUserRole.Owner, showInTimeline: false, user: expect.objectContaining({ id: user1.userId }) },
             ]),
             shared: true,
           }),
           expect.objectContaining({
             albumName: user1SharedLink,
             albumUsers: expect.arrayContaining([
-              { role: AlbumUserRole.Owner, user: expect.objectContaining({ id: user1.userId }) },
+              { role: AlbumUserRole.Owner, showInTimeline: false, user: expect.objectContaining({ id: user1.userId }) },
             ]),
             shared: true,
           }),
           expect.objectContaining({
             albumName: user1NotShared,
             albumUsers: expect.arrayContaining([
-              { role: AlbumUserRole.Owner, user: expect.objectContaining({ id: user1.userId }) },
+              { role: AlbumUserRole.Owner, showInTimeline: false, user: expect.objectContaining({ id: user1.userId }) },
             ]),
             shared: false,
           }),
           expect.objectContaining({
             albumName: user2SharedUser,
             albumUsers: expect.arrayContaining([
-              { role: AlbumUserRole.Owner, user: expect.objectContaining({ id: user2.userId }) },
+              { role: AlbumUserRole.Owner, showInTimeline: false, user: expect.objectContaining({ id: user2.userId }) },
             ]),
             shared: true,
           }),
@@ -242,28 +242,28 @@ describe('/albums', () => {
           expect.objectContaining({
             albumName: user1SharedEditorUser,
             albumUsers: expect.arrayContaining([
-              { role: AlbumUserRole.Owner, user: expect.objectContaining({ id: user1.userId }) },
+              { role: AlbumUserRole.Owner, showInTimeline: false, user: expect.objectContaining({ id: user1.userId }) },
             ]),
             shared: true,
           }),
           expect.objectContaining({
             albumName: user1SharedViewerUser,
             albumUsers: expect.arrayContaining([
-              { role: AlbumUserRole.Owner, user: expect.objectContaining({ id: user1.userId }) },
+              { role: AlbumUserRole.Owner, showInTimeline: false, user: expect.objectContaining({ id: user1.userId }) },
             ]),
             shared: true,
           }),
           expect.objectContaining({
             albumName: user1SharedLink,
             albumUsers: expect.arrayContaining([
-              { role: AlbumUserRole.Owner, user: expect.objectContaining({ id: user1.userId }) },
+              { role: AlbumUserRole.Owner, showInTimeline: false, user: expect.objectContaining({ id: user1.userId }) },
             ]),
             shared: true,
           }),
           expect.objectContaining({
             albumName: user2SharedUser,
             albumUsers: expect.arrayContaining([
-              { role: AlbumUserRole.Owner, user: expect.objectContaining({ id: user2.userId }) },
+              { role: AlbumUserRole.Owner, showInTimeline: false, user: expect.objectContaining({ id: user2.userId }) },
             ]),
             shared: true,
           }),
@@ -282,7 +282,7 @@ describe('/albums', () => {
           expect.objectContaining({
             albumName: user1NotShared,
             albumUsers: expect.arrayContaining([
-              { role: AlbumUserRole.Owner, user: expect.objectContaining({ id: user1.userId }) },
+              { role: AlbumUserRole.Owner, showInTimeline: false, user: expect.objectContaining({ id: user1.userId }) },
             ]),
             shared: false,
           }),
@@ -317,7 +317,7 @@ describe('/albums', () => {
           expect.objectContaining({
             albumName: user2SharedUser,
             albumUsers: expect.arrayContaining([
-              { role: AlbumUserRole.Owner, user: expect.objectContaining({ id: user2.userId }) },
+              { role: AlbumUserRole.Owner, showInTimeline: false, user: expect.objectContaining({ id: user2.userId }) },
             ]),
           }),
         ]),
@@ -379,14 +379,14 @@ describe('/albums', () => {
           expect.objectContaining({
             albumName: user4DeletedAsset,
             albumUsers: expect.arrayContaining([
-              { role: AlbumUserRole.Owner, user: expect.objectContaining({ id: user4.userId }) },
+              { role: AlbumUserRole.Owner, showInTimeline: false, user: expect.objectContaining({ id: user4.userId }) },
             ]),
             shared: false,
           }),
           expect.objectContaining({
             albumName: user4Empty,
             albumUsers: expect.arrayContaining([
-              { role: AlbumUserRole.Owner, user: expect.objectContaining({ id: user4.userId }) },
+              { role: AlbumUserRole.Owner, showInTimeline: false, user: expect.objectContaining({ id: user4.userId }) },
             ]),
             shared: false,
           }),
@@ -497,7 +497,7 @@ describe('/albums', () => {
         description: '',
         albumThumbnailAssetId: null,
         shared: false,
-        albumUsers: [{ role: AlbumUserRole.Owner, user: expect.objectContaining({ id: user1.userId }) }],
+        albumUsers: [{ role: AlbumUserRole.Owner, showInTimeline: false, user: expect.objectContaining({ id: user1.userId }) }],
         hasSharedLink: false,
         assetCount: 0,
         isActivityEnabled: true,
