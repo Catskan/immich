@@ -20,8 +20,10 @@
     mdiMotionPauseOutline,
     mdiMotionPlayOutline,
     mdiRotate360,
+    mdiShareVariant,
   } from '@mdi/js';
   import { onMount } from 'svelte';
+  import { t } from 'svelte-i18n';
   import type { ClassValue } from 'svelte/elements';
   import { fade } from 'svelte/transition';
   import Thumbhash from '$lib/components/Thumbhash.svelte';
@@ -350,6 +352,15 @@
         {#if !authManager.isSharedLink && showArchiveIcon && asset.visibility === AssetVisibility.Archive}
           <div class={['absolute inset-s-2 z-2', asset.isFavorite ? 'bottom-10' : 'bottom-2']}>
             <Icon data-icon-archive icon={mdiArchiveArrowDownOutline} size="24" class="text-white" />
+          </div>
+        {/if}
+
+        {#if !authManager.isSharedLink && asset.isShared}
+          <div
+            class={['absolute inset-e-2', assetOwner ? 'bottom-6' : 'bottom-2']}
+            title={$t('asset_from_shared_album')}
+          >
+            <Icon icon={mdiShareVariant} size="20" class="text-white drop-shadow-lg" />
           </div>
         {/if}
 

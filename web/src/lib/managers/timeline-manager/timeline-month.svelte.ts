@@ -206,6 +206,7 @@ export class TimelineMonth {
           : null,
         thumbhash: bucketAssets.thumbhash[i],
         people: null, // People are not included in the bucket assets
+        isShared: bucketAssets.isShared?.[i] ?? false,
       };
 
       if (bucketAssets.latitude?.at(i) && bucketAssets.longitude?.at(i)) {

@@ -19,10 +19,23 @@
   } from '$lib/stores/preferences.store';
   import { getSelectedAlbumGroupOption, sortAlbums, stringToSortOrder, type AlbumGroup } from '$lib/utils/album-utils';
   import type { ContextMenuPosition } from '$lib/utils/context-menu';
+  import { handleError } from '$lib/utils/handle-error';
   import { normalizeSearchString } from '$lib/utils/string-utils';
-  import { AlbumUserRole, type AlbumResponseDto, type SharedLinkResponseDto } from '@immich/sdk';
-  import { modalManager } from '@immich/ui';
-  import { mdiDeleteOutline, mdiDownload, mdiRenameOutline, mdiShareVariantOutline } from '@mdi/js';
+  import {
+    AlbumUserRole,
+    updateAlbumUserPreferences,
+    type AlbumResponseDto,
+    type SharedLinkResponseDto,
+  } from '@immich/sdk';
+  import { modalManager, toastManager } from '@immich/ui';
+  import {
+    mdiCheckboxBlankOutline,
+    mdiCheckboxMarkedOutline,
+    mdiDeleteOutline,
+    mdiDownload,
+    mdiRenameOutline,
+    mdiShareVariantOutline,
+  } from '@mdi/js';
   import { groupBy } from 'lodash-es';
   import { onMount, type Snippet } from 'svelte';
   import { t } from 'svelte-i18n';
@@ -174,6 +187,46 @@
     allowEdit && selectedAlbum && selectedAlbum.albumUsers[0].user.id === authManager.user.id,
   );
 
+  let isUpdatingTimeline = $state(false);
+
+  let selectedAlbumMembership = $derived(
+    selectedAlbum?.albumUsers.find(({ user: { id } }) => id === authManager.user.id),
+  );
+  // Only a recipient has a preference to set: the owner already sees their own album.
+  let isSelectedAlbumRecipient = $derived(
+    selectedAlbumMembership !== undefined && selectedAlbum?.albumUsers[0].user.id !== authManager.user.id,
+  );
+  let selectedShowInTimeline = $derived(selectedAlbumMembership?.showInTimeline ?? false);
+
+  const handleToggleShowInTimeline = async () => {
+    if (!selectedAlbum || !selectedAlbumMembership || isUpdatingTimeline) {
+      return;
+    }
+
+    const nextValue = !selectedShowInTimeline;
+    isUpdatingTimeline = true;
+
+    try {
+      await updateAlbumUserPreferences({
+        id: selectedAlbum.id,
+        userId: authManager.user.id,
+        updateAlbumUserPreferencesDto: { showInTimeline: nextValue },
+      });
+      selectedAlbum.albumUsers = selectedAlbum.albumUsers.map((albumUser) =>
+        albumUser.user.id === authManager.user.id ? { ...albumUser, showInTimeline: nextValue } : albumUser,
+      );
+      toastManager.success(
+        $t('album_timeline_display_changed', {
+          values: { inTimeline: nextValue },
+        }),
+      );
+    } catch (error) {
+      handleError(error, $t('errors.unable_to_update_timeline_display_status'));
+    } finally {
+      isUpdatingTimeline = false;
+    }
+  };
+
   onMount(async () => {
     if (allowEdit) {
       await removeAlbumsIfEmpty();
@@ -295,6 +348,13 @@
     <MenuOption icon={mdiShareVariantOutline} text={$t('share')} onClick={() => handleSelect('share')} />
   {/if}
   <MenuOption icon={mdiDownload} text={$t('download')} onClick={() => handleSelect('download')} />
+  {#if isSelectedAlbumRecipient}
+    <MenuOption
+      icon={selectedShowInTimeline ? mdiCheckboxMarkedOutline : mdiCheckboxBlankOutline}
+      text={$t('show_in_timeline')}
+      onClick={handleToggleShowInTimeline}
+    />
+  {/if}
   {#if showFullContextMenu}
     <MenuOption icon={mdiDeleteOutline} text={$t('delete')} onClick={() => handleSelect('delete')} />
   {/if}
