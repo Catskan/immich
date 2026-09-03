@@ -846,6 +846,8 @@ export type AssetStatsResponseDto = {
 };
 export type AlbumUserResponseDto = {
     role: AlbumUserRole;
+    /** Whether this album appears in this user main timeline */
+    showInTimeline: boolean;
     user: UserResponseDto;
 };
 export type ContributorCountResponseDto = {
@@ -959,6 +961,10 @@ export type MapMarkerResponseDto = {
 };
 export type UpdateAlbumUserDto = {
     role: AlbumUserRole;
+};
+export type UpdateAlbumUserPreferencesDto = {
+    /** Show this album's assets in the user's main timeline */
+    showInTimeline: boolean;
 };
 export type AlbumUserAddDto = {
     /** Album user role */
@@ -4415,6 +4421,20 @@ export function updateAlbumUser({ id, userId, updateAlbumUserDto }: {
         ...opts,
         method: "PUT",
         body: updateAlbumUserDto
+    })));
+}
+/**
+ * Update album user preferences
+ */
+export function updateAlbumUserPreferences({ id, userId, updateAlbumUserPreferencesDto }: {
+    id: string;
+    userId: string;
+    updateAlbumUserPreferencesDto: UpdateAlbumUserPreferencesDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText(`/albums/${encodeURIComponent(id)}/user/${encodeURIComponent(userId)}/preferences`, oazapfts.json({
+        ...opts,
+        method: "PUT",
+        body: updateAlbumUserPreferencesDto
     })));
 }
 /**

@@ -19,6 +19,7 @@ select
       (
         select
           "album_user"."role",
+          "album_user"."showInTimeline",
           (
             select
               to_json(obj)
@@ -98,6 +99,7 @@ select
       (
         select
           "album_user"."role",
+          "album_user"."showInTimeline",
           (
             select
               to_json(obj)
@@ -195,6 +197,7 @@ select
       (
         select
           "album_user"."role",
+          "album_user"."showInTimeline",
           (
             select
               to_json(obj)
@@ -344,7 +347,8 @@ with
     returning
       "album_user"."albumId",
       "album_user"."userId",
-      "album_user"."role"
+      "album_user"."role",
+      "album_user"."showInTimeline"
   ),
   "album_asset" as (
     insert into
@@ -368,6 +372,7 @@ select
       (
         select
           "album_user"."role",
+          "album_user"."showInTimeline",
           (
             select
               to_json(obj)
