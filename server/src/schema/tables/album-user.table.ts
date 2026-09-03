@@ -24,6 +24,11 @@ import { UserTable } from 'src/schema/tables/user.table';
   unique: true,
   where: `role = 'owner'`,
 })
+@Index({
+  name: 'IDX_album_user_show_in_timeline',
+  columns: ['userId'],
+  where: `"showInTimeline" = true`,
+})
 // Pre-existing indices from original album <--> user ManyToMany mapping
 @UpdatedAtTrigger('album_user_updatedAt')
 @AfterInsertTrigger({
