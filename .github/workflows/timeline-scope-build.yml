@@ -49,6 +49,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # server/src imports @immich/plugin-sdk and web/e2e import @immich/sdk from source: neither
+      # resolves until these workspace packages are built. Upstream's own server:ci-unit task
+      # (server/mise.toml) runs this same //:plugins task before `tsc --noEmit` for the same reason.
+      - name: Build workspace packages (@immich/sdk, @immich/plugin-sdk, @immich/plugin-core)
+        run: mise run //:plugins
+
       - name: Typecheck and lint the patched surfaces
         run: |
           pnpm --filter immich run check
