@@ -10,6 +10,7 @@ import {
   mapAlbum,
   UpdateAlbumDto,
   UpdateAlbumUserDto,
+  UpdateAlbumUserPreferencesDto,
 } from 'src/dtos/album.dto';
 import { BulkIdErrorReason, BulkIdResponseDto, BulkIdsDto } from 'src/dtos/asset-ids.response.dto';
 import { AuthDto } from 'src/dtos/auth.dto';
@@ -350,6 +351,32 @@ export class AlbumService extends BaseService {
     }
 
     await this.albumUserRepository.update({ albumId: id, userId }, { role: dto.role });
+  }
+
+  async updateUserPreferences(
+    auth: AuthDto,
+    id: string,
+    userId: string,
+    dto: UpdateAlbumUserPreferencesDto,
+  ): Promise<void> {
+    // 'me' is accepted on the sibling routes; resolve it before anything else.
+    if (userId === 'me') {
+      userId = auth.user.id;
+    }
+
+    // A preference is personal: nobody, not even the album owner, sets it for someone else.
+    if (userId !== auth.user.id) {
+      throw new BadRequestException('Can only update your own timeline preference');
+    }
+
+    await this.requireAccess({ auth, permission: Permission.AlbumRead, ids: [id] });
+
+    const album = await this.findOrFail(id, auth.user.id, { withAssets: false });
+    if (album.albumUsers.every(({ user }) => user.id !== userId)) {
+      throw new BadRequestException('User is not a member of this album');
+    }
+
+    await this.albumUserRepository.update({ albumId: id, userId }, { showInTimeline: dto.showInTimeline });
   }
 
   private findOrFail(id: string, authUserId: string, options: AlbumInfoOptions) {

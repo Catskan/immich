@@ -39,6 +39,7 @@ const withAlbumUsers = (authUserId?: string) => (eb: ExpressionBuilder<DB, 'albu
       .innerJoin('user', 'user.id', 'album_user.userId')
       .whereRef('album_user.albumId', '=', 'album.id')
       .select('album_user.role')
+      .select('album_user.showInTimeline')
       .select((eb) => jsonObjectFrom(eb.selectFrom(dummy).select(columns.user)).$notNull().as('user'))
       .orderBy('album_user.role')
       .$if(!!authUserId, (qb) => qb.orderBy((eb) => eb('album_user.userId', '=', authUserId!), 'desc'))
@@ -335,7 +336,7 @@ export class AlbumRepository {
                 sql`unnest(${roles}::album_user_role_enum[])`.as('role'),
               ]),
           )
-          .returning(['album_user.albumId', 'album_user.userId', 'album_user.role']),
+          .returning(['album_user.albumId', 'album_user.userId', 'album_user.role', 'album_user.showInTimeline']),
       )
       .with('album_asset', (db) =>
         db

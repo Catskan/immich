@@ -122,10 +122,17 @@ const UpdateAlbumUserSchema = z
   })
   .meta({ id: 'UpdateAlbumUserDto' });
 
+const UpdateAlbumUserPreferencesSchema = z
+  .object({
+    showInTimeline: z.boolean().describe("Show this album's assets in the user's main timeline"),
+  })
+  .meta({ id: 'UpdateAlbumUserPreferencesDto' });
+
 const AlbumUserResponseSchema = z
   .object({
     user: UserResponseSchema,
     role: AlbumUserRoleSchema,
+    showInTimeline: z.boolean().describe('Whether this album appears in this user main timeline'),
   })
   .meta({ id: 'AlbumUserResponseDto' });
 
@@ -212,6 +219,7 @@ export class UpdateAlbumDto extends createZodDto(UpdateAlbumSchema) {}
 export class GetAlbumsDto extends createZodDto(GetAlbumsSchema) {}
 export class AlbumStatisticsResponseDto extends createZodDto(AlbumStatisticsResponseSchema) {}
 export class UpdateAlbumUserDto extends createZodDto(UpdateAlbumUserSchema) {}
+export class UpdateAlbumUserPreferencesDto extends createZodDto(UpdateAlbumUserPreferencesSchema) {}
 export class AlbumResponseDto extends createZodDto(AlbumResponseSchema) {}
 class AlbumUserResponseDto extends createZodDto(AlbumUserResponseSchema) {}
 
@@ -238,6 +246,7 @@ export const mapAlbum = (entity: MaybeDehydrated<MapAlbumDto>): AlbumResponseDto
       albumUsers.push({
         user,
         role: albumUser.role,
+        showInTimeline: albumUser.showInTimeline,
       });
     }
   }
