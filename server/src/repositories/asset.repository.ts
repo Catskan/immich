@@ -99,6 +99,7 @@ interface AssetBuilderOptions {
 export interface TimeBucketOptions extends AssetBuilderOptions {
   order?: AssetOrder;
   orderBy?: AssetOrderBy;
+  withSharedAlbums?: boolean;
 }
 
 export interface TimeBucketItem {
@@ -791,7 +792,27 @@ export class AssetRepository {
             qb.where((eb) => {
               // TODO this should become a shared `hasAccess` style helper once implement sharing in more places
               const isOwner = eb('asset.ownerId', '=', anyUuid(options.userIds!));
-              return options.personId ? eb.or([isOwner, inSharedAlbum(eb, auth.user.id)]) : isOwner;
+              const conditions = [isOwner];
+
+              if (options.personId) {
+                conditions.push(inSharedAlbum(eb, auth.user.id));
+              }
+
+              // Own assets, OR assets from a shared album this user asked to see in their timeline.
+              if (options.withSharedAlbums) {
+                conditions.push(
+                  eb.exists((qb) =>
+                    qb
+                      .selectFrom('album_asset')
+                      .innerJoin('album_user', 'album_user.albumId', 'album_asset.albumId')
+                      .whereRef('album_asset.assetId', '=', 'asset.id')
+                      .where('album_user.userId', '=', asUuid(options.userIds![0]))
+                      .where('album_user.showInTimeline', '=', true),
+                  ),
+                );
+              }
+
+              return conditions.length > 1 ? eb.or(conditions) : isOwner;
             }),
           )
           .$if(options.isFavorite !== undefined, (qb) => qb.where('asset.isFavorite', '=', options.isFavorite!))
@@ -847,6 +868,10 @@ export class AssetRepository {
                 eb.lit(1),
               )
               .as('ratio'),
+            // Flags assets that are in the bucket only because a shared album opted them in.
+            options.withSharedAlbums && options.userIds?.length
+              ? sql<boolean>`asset."ownerId" != ${asUuid(options.userIds[0])}`.as('isShared')
+              : sql<boolean>`false`.as('isShared'),
           ])
           .$if(!auth.sharedLink || auth.sharedLink.showExif, (qb) =>
             qb.select(['asset_exif.city', 'asset_exif.country']),
@@ -881,8 +906,29 @@ export class AssetRepository {
           .$if(!!options.personId, (qb) => hasPeople(qb, [options.personId!]))
           .$if(!!options.userIds, (qb) =>
             qb.where((eb) => {
+              // TODO this should become a shared `hasAccess` style helper once implement sharing in more places
               const isOwner = eb('asset.ownerId', '=', anyUuid(options.userIds!));
-              return options.personId ? eb.or([isOwner, inSharedAlbum(eb, auth.user.id)]) : isOwner;
+              const conditions = [isOwner];
+
+              if (options.personId) {
+                conditions.push(inSharedAlbum(eb, auth.user.id));
+              }
+
+              // Own assets, OR assets from a shared album this user asked to see in their timeline.
+              if (options.withSharedAlbums) {
+                conditions.push(
+                  eb.exists((qb) =>
+                    qb
+                      .selectFrom('album_asset')
+                      .innerJoin('album_user', 'album_user.albumId', 'album_asset.albumId')
+                      .whereRef('album_asset.assetId', '=', 'asset.id')
+                      .where('album_user.userId', '=', asUuid(options.userIds![0]))
+                      .where('album_user.showInTimeline', '=', true),
+                  ),
+                );
+              }
+
+              return conditions.length > 1 ? eb.or(conditions) : isOwner;
             }),
           )
           .$if(options.isFavorite !== undefined, (qb) => qb.where('asset.isFavorite', '=', options.isFavorite!))
@@ -947,6 +993,7 @@ export class AssetRepository {
             eb.fn.coalesce(eb.fn('array_agg', ['ratio']), sql.lit('{}')).as('ratio'),
             eb.fn.coalesce(eb.fn('array_agg', ['status']), sql.lit('{}')).as('status'),
             eb.fn.coalesce(eb.fn('array_agg', ['thumbhash']), sql.lit('{}')).as('thumbhash'),
+            eb.fn.coalesce(eb.fn('array_agg', ['isShared']), sql.lit('{}')).as('isShared'),
           ])
           .$if(!auth.sharedLink || auth.sharedLink.showExif, (qb) =>
             qb.select((eb) => [

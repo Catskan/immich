@@ -413,6 +413,7 @@ with
         end,
         1
       ) as "ratio",
+      false as "isShared",
       "asset_exif"."city",
       "asset_exif"."country",
       "stack"
@@ -465,6 +466,7 @@ with
       coalesce(array_agg("ratio"), '{}') as "ratio",
       coalesce(array_agg("status"), '{}') as "status",
       coalesce(array_agg("thumbhash"), '{}') as "thumbhash",
+      coalesce(array_agg("isShared"), '{}') as "isShared",
       coalesce(array_agg("city"), '{}') as "city",
       coalesce(array_agg("country"), '{}') as "country",
       coalesce(json_agg("stack"), '[]') as "stack"
