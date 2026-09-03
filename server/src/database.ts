@@ -31,6 +31,7 @@ export type AuthUser = {
 export type AlbumUser = {
   user: ShallowDehydrateObject<User>;
   role: AlbumUserRole;
+  showInTimeline: boolean;
 };
 
 export type AssetFile = {

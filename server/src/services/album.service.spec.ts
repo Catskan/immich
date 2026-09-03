@@ -675,6 +675,60 @@ describe(AlbumService.name, () => {
     });
   });
 
+  describe('updateUserPreferences', () => {
+    it('should let a user turn on showInTimeline for themselves', async () => {
+      const user = UserFactory.create();
+      const album = AlbumFactory.from().albumUser({ userId: user.id }).build();
+      mocks.access.album.checkSharedAlbumAccess.mockResolvedValue(new Set([album.id]));
+      mocks.album.getById.mockResolvedValue(getForAlbum(album));
+      mocks.albumUser.update.mockResolvedValue();
+
+      await sut.updateUserPreferences(AuthFactory.create(user), album.id, user.id, { showInTimeline: true });
+
+      expect(mocks.albumUser.update).toHaveBeenCalledWith(
+        { albumId: album.id, userId: user.id },
+        { showInTimeline: true },
+      );
+    });
+
+    it('should resolve "me" to the authenticated user', async () => {
+      const user = UserFactory.create();
+      const album = AlbumFactory.from().albumUser({ userId: user.id }).build();
+      mocks.access.album.checkSharedAlbumAccess.mockResolvedValue(new Set([album.id]));
+      mocks.album.getById.mockResolvedValue(getForAlbum(album));
+      mocks.albumUser.update.mockResolvedValue();
+
+      await sut.updateUserPreferences(AuthFactory.create(user), album.id, 'me', { showInTimeline: true });
+
+      expect(mocks.albumUser.update).toHaveBeenCalledWith(
+        { albumId: album.id, userId: user.id },
+        { showInTimeline: true },
+      );
+    });
+
+    it('should refuse to change another user preference', async () => {
+      const user1 = UserFactory.create();
+      const user2 = UserFactory.create();
+
+      await expect(
+        sut.updateUserPreferences(AuthFactory.create(user1), 'album-1', user2.id, { showInTimeline: true }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+
+      expect(mocks.albumUser.update).not.toHaveBeenCalled();
+    });
+
+    it('should refuse when the user is not a member of the album', async () => {
+      const user = UserFactory.create();
+      const album = AlbumFactory.from().build();
+      mocks.access.album.checkSharedAlbumAccess.mockResolvedValue(new Set([album.id]));
+      mocks.album.getById.mockResolvedValue(getForAlbum(album));
+
+      await expect(
+        sut.updateUserPreferences(AuthFactory.create(user), album.id, user.id, { showInTimeline: true }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+  });
+
   describe('getAlbumInfo', () => {
     it('should get a shared album', async () => {
       const album = AlbumFactory.from().albumUser().build();

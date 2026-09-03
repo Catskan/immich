@@ -2993,6 +2993,78 @@
         "x-immich-state": "Stable"
       }
     },
+    "/albums/{id}/user/{userId}/preferences": {
+      "put": {
+        "description": "Update the calling user timeline preference for a specific album. Users may only update their own preferences. Use an ID of \"me\" to reference yourself.",
+        "operationId": "updateAlbumUserPreferences",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Album ID",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "description": "Album user ID, or \"me\" to reference the current user.",
+            "x-immich-history": [
+              {
+                "version": "v3",
+                "state": "Updated",
+                "description": "\"me\" as a value is deprecated"
+              }
+            ],
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAlbumUserPreferencesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Update album user preferences",
+        "tags": [
+          "Albums"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v3.0.0",
+            "state": "Added"
+          }
+        ],
+        "x-immich-permission": "album.read"
+      }
+    },
     "/albums/{id}/users": {
       "put": {
         "description": "Share an album with multiple users. Each user can be given a specific role in the album.",
@@ -19674,12 +19746,17 @@
           "role": {
             "$ref": "#/components/schemas/AlbumUserRole"
           },
+          "showInTimeline": {
+            "description": "Whether this album appears in this user main timeline",
+            "type": "boolean"
+          },
           "user": {
             "$ref": "#/components/schemas/UserResponseDto"
           }
         },
         "required": [
           "role",
+          "showInTimeline",
           "user"
         ],
         "type": "object"
@@ -31860,6 +31937,18 @@
         },
         "required": [
           "role"
+        ],
+        "type": "object"
+      },
+      "UpdateAlbumUserPreferencesDto": {
+        "properties": {
+          "showInTimeline": {
+            "description": "Show this album's assets in the user's main timeline",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "showInTimeline"
         ],
         "type": "object"
       },

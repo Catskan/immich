@@ -12,6 +12,7 @@ import {
   GetAlbumsDto,
   UpdateAlbumDto,
   UpdateAlbumUserDto,
+  UpdateAlbumUserPreferencesDto,
 } from 'src/dtos/album.dto';
 import { BulkIdResponseDto, BulkIdsDto } from 'src/dtos/asset-ids.response.dto';
 import { AuthDto } from 'src/dtos/auth.dto';
@@ -180,6 +181,23 @@ export class AlbumController {
     @Body() dto: UpdateAlbumUserDto,
   ): Promise<void> {
     return this.service.updateUser(auth, id, userId, dto);
+  }
+
+  @Put(':id/user/:userId/preferences')
+  @Authenticated({ permission: Permission.AlbumRead })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Endpoint({
+    summary: 'Update album user preferences',
+    description:
+      'Update the calling user timeline preference for a specific album. Users may only update their own preferences. Use an ID of "me" to reference yourself.',
+    history: HistoryBuilder.v3(),
+  })
+  updateAlbumUserPreferences(
+    @Auth() auth: AuthDto,
+    @Param() { id, userId }: AlbumUserParamDto,
+    @Body() dto: UpdateAlbumUserPreferencesDto,
+  ): Promise<void> {
+    return this.service.updateUserPreferences(auth, id, userId, dto);
   }
 
   @Delete(':id/user/:userId')
