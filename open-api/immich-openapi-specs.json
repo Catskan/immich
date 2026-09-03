@@ -16129,6 +16129,15 @@
             }
           },
           {
+            "name": "withSharedAlbums",
+            "required": false,
+            "in": "query",
+            "description": "Include assets from shared albums the user has opted into (showInTimeline). Not supported together with albumId, personId or tagId.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "withStacked",
             "required": false,
             "in": "query",
@@ -16313,6 +16322,15 @@
             "required": false,
             "in": "query",
             "description": "Include assets shared by partners",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "withSharedAlbums",
+            "required": false,
+            "in": "query",
+            "description": "Include assets from shared albums the user has opted into (showInTimeline). Not supported together with albumId, personId or tagId.",
             "schema": {
               "type": "boolean"
             }
@@ -31708,6 +31726,13 @@
           },
           "isImage": {
             "description": "Array indicating whether each asset is an image (false for videos)",
+            "items": {
+              "type": "boolean"
+            },
+            "type": "array"
+          },
+          "isShared": {
+            "description": "Array indicating whether each asset comes from a shared album rather than the user own library",
             "items": {
               "type": "boolean"
             },

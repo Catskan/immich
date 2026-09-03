@@ -20,6 +20,11 @@ const TimeBucketQueryBaseSchema = z
       .optional()
       .describe('Include stacked assets in the response. When true, only primary assets from stacks are returned.'),
     withPartners: stringToBool.optional().describe('Include assets shared by partners'),
+    withSharedAlbums: stringToBool
+      .optional()
+      .describe(
+        'Include assets from shared albums the user has opted into (showInTimeline). Not supported together with albumId, personId or tagId.',
+      ),
     order: AssetOrderSchema.optional().describe(
       'Sort order for assets within time buckets (ASC for oldest first, DESC for newest first)',
     ),
@@ -119,6 +124,10 @@ const TimeBucketAssetResponseSchema = z
       .array(z.number().meta({ format: 'double' }).nullable())
       .optional()
       .describe('Array of longitude coordinates extracted from EXIF GPS data'),
+    isShared: z
+      .array(z.boolean())
+      .optional()
+      .describe('Array indicating whether each asset comes from a shared album rather than the user own library'),
   })
   .meta({ id: 'TimeBucketAssetResponseDto' });
 

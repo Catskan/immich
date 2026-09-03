@@ -85,5 +85,21 @@ export class TimelineService extends BaseService {
         );
       }
     }
+
+    if (dto.withSharedAlbums) {
+      const isRequestedLocked = dto.visibility === AssetVisibility.Locked;
+      const isRequestedArchived = dto.visibility === AssetVisibility.Archive;
+      const isRequestedTrash = dto.isTrashed === true;
+
+      if (isRequestedLocked || isRequestedArchived || isRequestedTrash) {
+        throw new BadRequestException(
+          'withSharedAlbums is only supported for non-archived, non-trashed, non-locked assets',
+        );
+      }
+
+      if (dto.albumId || dto.personId || dto.tagId) {
+        throw new BadRequestException('withSharedAlbums is not supported with albumId, personId or tagId filters');
+      }
+    }
   }
 }

@@ -3077,6 +3077,8 @@ export type TimeBucketAssetResponseDto = {
     isFavorite: boolean[];
     /** Array indicating whether each asset is an image (false for videos) */
     isImage: boolean[];
+    /** Array indicating whether each asset comes from a shared album rather than the user own library */
+    isShared?: boolean[];
     /** Array indicating whether each asset is in the trash */
     isTrashed: boolean[];
     /** Array of latitude coordinates extracted from EXIF GPS data */
@@ -7304,7 +7306,7 @@ export function tagAssets({ id, bulkIdsDto }: {
 /**
  * Get time bucket
  */
-export function getTimeBucket({ albumId, bbox, isFavorite, isTrashed, key, order, orderBy, personId, slug, tagId, timeBucket, userId, visibility, withCoordinates, withPartners, withStacked }: {
+export function getTimeBucket({ albumId, bbox, isFavorite, isTrashed, key, order, orderBy, personId, slug, tagId, timeBucket, userId, visibility, withCoordinates, withPartners, withSharedAlbums, withStacked }: {
     albumId?: string;
     bbox?: string;
     isFavorite?: boolean;
@@ -7320,6 +7322,7 @@ export function getTimeBucket({ albumId, bbox, isFavorite, isTrashed, key, order
     visibility?: AssetVisibility;
     withCoordinates?: boolean;
     withPartners?: boolean;
+    withSharedAlbums?: boolean;
     withStacked?: boolean;
 }, opts?: Oazapfts.RequestOpts) {
     return oazapfts.ok(oazapfts.fetchJson<{
@@ -7341,6 +7344,7 @@ export function getTimeBucket({ albumId, bbox, isFavorite, isTrashed, key, order
         visibility,
         withCoordinates,
         withPartners,
+        withSharedAlbums,
         withStacked
     }))}`, {
         ...opts
@@ -7349,7 +7353,7 @@ export function getTimeBucket({ albumId, bbox, isFavorite, isTrashed, key, order
 /**
  * Get time buckets
  */
-export function getTimeBuckets({ albumId, bbox, isFavorite, isTrashed, key, order, orderBy, personId, slug, tagId, userId, visibility, withCoordinates, withPartners, withStacked }: {
+export function getTimeBuckets({ albumId, bbox, isFavorite, isTrashed, key, order, orderBy, personId, slug, tagId, userId, visibility, withCoordinates, withPartners, withSharedAlbums, withStacked }: {
     albumId?: string;
     bbox?: string;
     isFavorite?: boolean;
@@ -7364,6 +7368,7 @@ export function getTimeBuckets({ albumId, bbox, isFavorite, isTrashed, key, orde
     visibility?: AssetVisibility;
     withCoordinates?: boolean;
     withPartners?: boolean;
+    withSharedAlbums?: boolean;
     withStacked?: boolean;
 }, opts?: Oazapfts.RequestOpts) {
     return oazapfts.ok(oazapfts.fetchJson<{
@@ -7384,6 +7389,7 @@ export function getTimeBuckets({ albumId, bbox, isFavorite, isTrashed, key, orde
         visibility,
         withCoordinates,
         withPartners,
+        withSharedAlbums,
         withStacked
     }))}`, {
         ...opts
