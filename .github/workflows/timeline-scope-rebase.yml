@@ -1,0 +1,111 @@
+# Rebase the timeline-scope patch onto a new upstream release.
+#
+# Triggered by Renovate automerging a bump of timeline-scope/upstream.env. A clean rebase
+# force-pushes the branch, which starts the build workflow. A conflict opens an issue and
+# stops: nothing is published, nothing moves downstream (D6).
+name: timeline-scope rebase
+
+on:
+  push:
+    branches: [timeline-scope]
+    paths: [timeline-scope/upstream.env]
+  workflow_dispatch:
+
+concurrency:
+  group: timeline-scope-rebase
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  rebase:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # A PAT, not GITHUB_TOKEN: a push made with GITHUB_TOKEN does not start
+          # another workflow, and the whole point here is to start the build.
+          token: ${{ secrets.TIMELINE_SCOPE_PAT }}
+
+      - name: Read the requested upstream tag
+        id: version
+        run: |
+          set -euo pipefail
+          # shellcheck disable=SC1091
+          . timeline-scope/upstream.env
+          echo "upstream_tag=${UPSTREAM_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch upstream
+        run: |
+          set -euo pipefail
+          git remote add upstream https://github.com/immich-app/immich.git
+          git fetch upstream --tags --force
+          git rev-parse "${{ steps.version.outputs.upstream_tag }}^{commit}"
+
+      - name: Rebase the patch
+        id: rebase
+        run: |
+          set -euo pipefail
+          git config user.name 'timeline-scope bot'
+          git config user.email 'timeline-scope@users.noreply.github.com'
+          base="$(git merge-base HEAD '${{ steps.version.outputs.upstream_tag }}')"
+          if git rebase --onto '${{ steps.version.outputs.upstream_tag }}' "$base"; then
+            echo "conflict=false" >> "$GITHUB_OUTPUT"
+          else
+            {
+              echo 'conflict=true'
+              echo 'files<<EOF'
+              git diff --name-only --diff-filter=U
+              echo 'EOF'
+            } >> "$GITHUB_OUTPUT"
+            git rebase --abort
+          fi
+
+      - name: Refuse a patch that reaches into mobile/
+        if: steps.rebase.outputs.conflict == 'false'
+        run: |
+          set -euo pipefail
+          if git diff --name-only '${{ steps.version.outputs.upstream_tag }}'..HEAD | grep -q '^mobile/'; then
+            echo '::error::the patch touches mobile/, which is out of scope by design (D1)'
+            exit 1
+          fi
+
+      - name: Push the rebased branch
+        if: steps.rebase.outputs.conflict == 'false'
+        run: git push --force-with-lease origin timeline-scope
+
+      - name: Open an issue on conflict
+        if: steps.rebase.outputs.conflict == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.TIMELINE_SCOPE_PAT }}
+          UPSTREAM_TAG: ${{ steps.version.outputs.upstream_tag }}
+          CONFLICTS: ${{ steps.rebase.outputs.files }}
+        run: |
+          set -euo pipefail
+          body=$(cat <<EOF
+          The automatic rebase of \`timeline-scope\` onto \`${UPSTREAM_TAG}\` conflicted and was aborted.
+
+          Nothing was published; \`immich-custom\` and the VM are untouched.
+
+          Conflicting files:
+          \`\`\`
+          ${CONFLICTS}
+          \`\`\`
+
+          To resolve, on a machine with the fork cloned:
+          \`\`\`bash
+          git fetch upstream --tags
+          git rebase --onto ${UPSTREAM_TAG} \$(git merge-base HEAD ${UPSTREAM_TAG})
+          # resolve, then:
+          git push --force-with-lease origin timeline-scope
+          \`\`\`
+          EOF
+          )
+          gh issue create --title "Rebase conflict onto ${UPSTREAM_TAG}" --body "$body"
+
+      - name: Fail the run so the conflict is visible
+        if: steps.rebase.outputs.conflict == 'true'
+        run: exit 1
