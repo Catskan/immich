@@ -804,5 +804,53 @@ describe('/albums', () => {
       expect(status).toBe(400);
       expect(body).toEqual(errorDto.badRequest('User is owner'));
     });
+
+    it('should let a shared user update their own showInTimeline preference', async () => {
+      const album = await utils.createAlbum(user1.accessToken, {
+        albumName: 'preferences-self',
+        albumUsers: [{ userId: user2.userId, role: AlbumUserRole.Viewer }],
+      });
+
+      const { status } = await request(app)
+        .put(`/albums/${album.id}/user/${user2.userId}/preferences`)
+        .set('Authorization', `Bearer ${user2.accessToken}`)
+        .send({ showInTimeline: true });
+
+      expect(status).toBe(204);
+
+      const { body } = await request(app)
+        .get(`/albums/${album.id}`)
+        .set('Authorization', `Bearer ${user2.accessToken}`);
+      expect(body.albumUsers).toEqual(expect.arrayContaining([expect.objectContaining({ showInTimeline: true })]));
+    });
+
+    it('should not let the album owner change a shared user preference', async () => {
+      const album = await utils.createAlbum(user1.accessToken, {
+        albumName: 'preferences-owner-refused',
+        albumUsers: [{ userId: user2.userId, role: AlbumUserRole.Viewer }],
+      });
+
+      const { status, body } = await request(app)
+        .put(`/albums/${album.id}/user/${user2.userId}/preferences`)
+        .set('Authorization', `Bearer ${user1.accessToken}`)
+        .send({ showInTimeline: true });
+
+      expect(status).toBe(400);
+      expect(body).toEqual(errorDto.badRequest('Can only update your own timeline preference'));
+    });
+
+    it('should accept "me" as the user id', async () => {
+      const album = await utils.createAlbum(user1.accessToken, {
+        albumName: 'preferences-me',
+        albumUsers: [{ userId: user2.userId, role: AlbumUserRole.Viewer }],
+      });
+
+      const { status } = await request(app)
+        .put(`/albums/${album.id}/user/me/preferences`)
+        .set('Authorization', `Bearer ${user2.accessToken}`)
+        .send({ showInTimeline: true });
+
+      expect(status).toBe(204);
+    });
   });
 });
