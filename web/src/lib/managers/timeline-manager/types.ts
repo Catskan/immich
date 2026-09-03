@@ -38,6 +38,8 @@ export type TimelineAsset = {
   people: string[] | null;
   latitude?: number | null;
   longitude?: number | null;
+  /** True when the asset is in this bucket because a shared album was opted into the timeline. */
+  isShared?: boolean;
 };
 
 export type MoveAsset = { asset: TimelineAsset; date: TimelineDate };
