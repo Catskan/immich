@@ -34,50 +34,79 @@ jobs:
           echo "image_tag=${UPSTREAM_TAG}-timeline-scope.${PATCH_REVISION}" >> "$GITHUB_OUTPUT"
           echo "upstream_tag=${UPSTREAM_TAG}" >> "$GITHUB_OUTPUT"
 
-      - name: Refuse to publish a tag that already exists
+      - name: Skip the build if the tag is already published and the patch didn't change
+        id: gate
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           tag='${{ steps.version.outputs.image_tag }}'
-          if gh api "users/${{ github.repository_owner }}/packages/container/immich-server-timeline-scope/versions" \
+          if ! gh api "users/${{ github.repository_owner }}/packages/container/immich-server-timeline-scope/versions" \
                --jq '.[].metadata.container.tags[]' 2>/dev/null | grep -Fxq "$tag"; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # The tag is already published. A push that only touches CI/docs (e.g. adding a
+          # workflow file) doesn't need a new image -- but if the patch itself changed and
+          # nobody bumped PATCH_REVISION, that is a real mistake and must still fail loudly,
+          # never skip silently.
+          if [ "${{ github.event_name }}" = "push" ] && [ -n "${{ github.event.before }}" ] \
+             && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            changed=$(gh api "repos/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }}" --jq '.files[].filename')
+          else
+            changed=""
+          fi
+
+          if [ -z "$changed" ] || echo "$changed" | grep -vE '^(\.github/|docs/|README)' | grep -q .; then
             echo "::error::${tag} is already published. Bump PATCH_REVISION in timeline-scope/upstream.env."
             exit 1
           fi
 
+          echo "::notice::${tag} is already published, and this push only touched: $(echo "$changed" | tr '\n' ' ') -- nothing to build, skipping."
+          echo "skip=true" >> "$GITHUB_OUTPUT"
+
       - uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2.4.4
+        if: steps.gate.outputs.skip != 'true'
 
       - name: Install dependencies
+        if: steps.gate.outputs.skip != 'true'
         run: pnpm install --frozen-lockfile
 
       # server/src imports @immich/plugin-sdk and web/e2e import @immich/sdk from source: neither
       # resolves until these workspace packages are built. Upstream's own server:ci-unit task
       # (server/mise.toml) runs this same //:plugins task before `tsc --noEmit` for the same reason.
       - name: Build workspace packages (@immich/sdk, @immich/plugin-sdk, @immich/plugin-core)
+        if: steps.gate.outputs.skip != 'true'
         run: mise run //:plugins
 
       - name: Typecheck and lint the patched surfaces
+        if: steps.gate.outputs.skip != 'true'
         run: |
           pnpm --filter immich run check
           pnpm --filter immich-web run check:typescript
           pnpm --filter immich-web run check:svelte
 
       - name: Server unit tests
+        if: steps.gate.outputs.skip != 'true'
         run: pnpm --filter immich run test
 
       - name: End-to-end tests
+        if: steps.gate.outputs.skip != 'true'
         run: mise //e2e:test
 
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+        if: steps.gate.outputs.skip != 'true'
 
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        if: steps.gate.outputs.skip != 'true'
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
+        if: steps.gate.outputs.skip != 'true'
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
