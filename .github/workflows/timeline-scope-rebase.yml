@@ -104,7 +104,7 @@ jobs:
           \`\`\`
           EOF
           )
-          gh issue create --title "Rebase conflict onto ${UPSTREAM_TAG}" --body "$body"
+          gh issue create -R Catskan/immich --title "Rebase conflict onto ${UPSTREAM_TAG}" --body "$body"
 
       - name: Fail the run so the conflict is visible
         if: steps.rebase.outputs.conflict == 'true'
