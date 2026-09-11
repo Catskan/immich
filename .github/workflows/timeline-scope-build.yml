@@ -7,6 +7,14 @@ name: timeline-scope build
 on:
   push:
     branches: [timeline-scope]
+    # Renovate's automerge of the UPSTREAM_TAG bump touches only this file, and that same
+    # push also triggers timeline-scope-rebase.yml -- BEFORE the actual rebase happens.
+    # Without this filter, this job races that one: it builds and publishes the still-
+    # unrebased code under the NEW upstream tag, burning the PATCH_REVISION slot the real
+    # rebased build needed. The rebase workflow's own force-push (which touches server/,
+    # web/, etc.) still triggers this job normally.
+    paths-ignore:
+      - timeline-scope/upstream.env
   workflow_dispatch:
 
 concurrency:
