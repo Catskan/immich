@@ -49,7 +49,14 @@
   import { handlePromiseError } from '$lib/utils';
   import { handleError } from '$lib/utils/handle-error';
   import { isAlbumsRoute, navigate, type AssetGridRouteSearchParams } from '$lib/utils/navigation';
-  import { AlbumUserRole, AssetVisibility, getAlbumInfo, updateAlbumInfo, type AlbumResponseDto } from '@immich/sdk';
+  import {
+    AlbumUserRole,
+    AssetVisibility,
+    getAlbumInfo,
+    updateAlbumInfo,
+    updateAlbumUserPreferences,
+    type AlbumResponseDto,
+  } from '@immich/sdk';
   import {
     ActionButton,
     CommandPaletteDefaultProvider,
@@ -62,6 +69,8 @@
     mdiAccountEye,
     mdiAccountEyeOutline,
     mdiArrowLeft,
+    mdiCheckboxBlankOutline,
+    mdiCheckboxMarkedOutline,
     mdiCogOutline,
     mdiDeleteOutline,
     mdiDotsHorizontal,
@@ -254,6 +263,27 @@
   const isEditor = $derived(
     album.albumUsers.find(({ user: { id } }) => id === authManager.user.id)?.role === AlbumUserRole.Editor || isOwned,
   );
+
+  // Same toggle as the album list's context menu, reachable here because the album card's
+  // menu button only appears on hover, which touch screens never trigger.
+  const membership = $derived(album.albumUsers.find(({ user: { id } }) => id === authManager.user.id));
+  const isRecipient = $derived(membership !== undefined && !isOwned);
+  const showInTimeline = $derived(membership?.showInTimeline ?? false);
+
+  const handleToggleShowInTimeline = async () => {
+    const nextValue = !showInTimeline;
+    try {
+      await updateAlbumUserPreferences({
+        id: album.id,
+        userId: authManager.user.id,
+        updateAlbumUserPreferencesDto: { showInTimeline: nextValue },
+      });
+      await refreshAlbum();
+      toastManager.success($t('album_timeline_display_changed', { values: { inTimeline: nextValue } }));
+    } catch (error) {
+      handleError(error, $t('errors.unable_to_update_timeline_display_status'));
+    }
+  };
 
   let albumHasViewers = $derived(album.albumUsers.some(({ role }) => role === AlbumUserRole.Viewer));
   const isSelectionMode = $derived(
@@ -555,7 +585,7 @@
               />
             {/if}
 
-            {#if isOwned || containsEditors}
+            {#if isOwned || containsEditors || isRecipient}
               <ButtonContextMenu
                 icon={mdiDotsVertical}
                 title={$t('album_options')}
@@ -567,6 +597,13 @@
                     icon={showAlbumUsers ? mdiAccountEye : mdiAccountEyeOutline}
                     text={showAlbumUsers ? $t('hide_asset_owners') : $t('view_asset_owners')}
                     onClick={() => timelineManager.toggleShowAssetOwners()}
+                  />
+                {/if}
+                {#if isRecipient}
+                  <MenuOption
+                    icon={showInTimeline ? mdiCheckboxMarkedOutline : mdiCheckboxBlankOutline}
+                    text={$t('show_in_timeline')}
+                    onClick={handleToggleShowInTimeline}
                   />
                 {/if}
                 {#if isOwned && album.assetCount > 0}
