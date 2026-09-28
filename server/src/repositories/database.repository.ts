@@ -497,7 +497,9 @@ export class DatabaseRepository {
     return new Migrator({
       db: this.db,
       migrationLockTableName: 'kysely_migrations_lock',
-      allowUnorderedMigrations: this.configRepository.isDev(),
+      // timeline-scope: the fork's migration already ran in production, and each upstream
+      // release can ship migrations named before it. Strict ordering refuses to boot then.
+      allowUnorderedMigrations: true,
       migrationTableName: 'kysely_migrations',
       provider: new FileMigrationProvider({
         fs: { readdir },
